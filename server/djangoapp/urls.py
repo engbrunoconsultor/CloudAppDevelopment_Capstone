@@ -2,10 +2,13 @@ from django.urls import path
 from django.conf.urls.static import static
 from django.conf import settings
 from . import views
+from .views import static_view, about, contact
 
 app_name = 'djangoapp'
 urlpatterns = [
-    path('djangoapp/static/', views.static_view, name='static_view'),
+    path('static', static_view, name='static_view'),
+    path('about', about, name='about'),
+    path('contact', contact, name='contact'),
     # route is a string contains a URL pattern
     # view refers to the view function
     # name the URL
