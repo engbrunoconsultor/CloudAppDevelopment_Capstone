@@ -1,8 +1,8 @@
 from django.shortcuts import render
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, render, redirect
-# from .models import related models
+from .models import CarDealer, CarMake, CarDealer, Review
 # from .restapis import related methods
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
@@ -78,22 +78,26 @@ def registration_request(request):
 
 # Update the `get_dealerships` view to render the index page with a list of dealerships
 def get_dealerships(request):
-    # context = {}
-    # if request.method == "GET":
-    #     return render(request, 'djangoapp/dealership.html', context)
     try:
         # Fetch all dealership records
         dealerships = CarDealer.objects.all()
         if not dealerships:
-            return JsonResponse({'error': '404: The database is empty'}, status=404)
-        
-        # Serialize data to JSON format
-        dealerships_data = list(dealerships.values('id', 'city', 'state', 'st', 'address', 'zip', 'lat', 'long'))
-        return JsonResponse(dealerships_data, safe=False)
-    except Exception as e:
-        # Log the exception
-        return JsonResponse({'error': '500: Something went wrong on the server', 'details': str(e)}, status=500)
+            # If no dealerships are found, render the template with an empty list
+            context = {'dealerships': []}
+            return render(request, 'djangoapp/dealership.html', context)
 
+        # Prepare the data to be displayed on the page
+        context = {
+            'dealerships': dealerships
+        }
+        
+        # Render the dealership index page with the context containing dealerships
+        return render(request, 'djangoapp/dealership.html', context)
+    except Exception as e:
+        # If an exception occurs, log the exception and return a custom error page
+        # Log the exception (assuming you have logging configured)
+        # logger.error(f"Error fetching dealerships: {e}")
+        return render(request, 'djangoapp/error.html', {'message': 'Something went wrong while fetching dealership data'})
 
 # Create a `get_dealer_details` view to render the reviews of a dealer
 # def get_dealer_details(request, dealer_id):
@@ -131,8 +135,7 @@ def get_reviews_by_dealership(request):
     except Exception as e:
         return JsonResponse({'error': '500: Something went wrong on the server', 'details': str(e)}, status=500)
 
-@csrf_exempt  # Disable CSRF token for demonstration purposes
-@require_http_methods(["POST"])  # Only accept POST requests
+
 def post_review(request):
     try:
         # Parse the JSON body of the request

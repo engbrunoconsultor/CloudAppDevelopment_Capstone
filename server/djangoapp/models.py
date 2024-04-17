@@ -14,7 +14,7 @@ class CarMake(models.Model):
     description = models.TextField()
     founded_year = models.IntegerField(null=True, blank=True)
 
-    def __stri__(self):
+    def __str__(self):
         return self.name
 
 # <HINT> Create a Car Model model `class CarModel(models.Model):`:

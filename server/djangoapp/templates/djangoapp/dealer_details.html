@@ -9,6 +9,18 @@
 
     <body>
 
+{% block content %}
+<h1>Dealerships</h1>
+{% if dealerships %}
+  <ul>
+  {% for dealer in dealerships %}
+    <li>{{ dealer.city }} ({{ dealer.state }}) - {{ dealer.address }}</li>
+  {% endfor %}
+  </ul>
+{% else %}
+  <p>No dealerships found.</p>
+{% endif %}
+{% endblock %}
     <!--Add a nav bar here -->
 
     <!-- Add reviews as cards -->

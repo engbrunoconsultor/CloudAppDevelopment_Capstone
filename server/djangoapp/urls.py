@@ -4,7 +4,7 @@ from django.conf import settings
 from . import views
 from .views import (
  static_view, about,  contact,  logout_request, login_request, 
- registration_request, get_all_dealerships, get_dealerships_by_state, 
+ registration_request, get_dealerships, get_dealerships_by_state, 
  get_reviews_by_dealership, post_review
 )    
 
@@ -30,7 +30,7 @@ urlpatterns = [
 
     # path for logout
 
-     path('api/dealership', get_all_dealerships, name='get_all_dealerships'),
+     path('api/dealership', get_dealerships, name='get_all_dealerships'),
 
     # path for dealer reviews view
     path('api/dealership', get_dealerships_by_state, name='dealerships_by_state'),
