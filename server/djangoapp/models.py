@@ -49,29 +49,28 @@ class CarModel(models.Model):
         return f"{self.name} - {self.type} ({self.year.year})"
 
 # <HINT> Create a plain Python class `CarDealer` to hold dealer data
-class CarDealer:
-
-    def __init__(self, address, city, full_name, id, lat, long, short_name, st, zip):
-        # Dealer address
-        self.address = address
-        # Dealer city
-        self.city = city
-        # Dealer Full Name
-        self.full_name = full_name
-        # Dealer id
-        self.id = id
-        # Location lat
-        self.lat = lat
-        # Location long
-        self.long = long
-        # Dealer short name
-        self.short_name = short_name
-        # Dealer state
-        self.st = st
-        # Dealer zip
-        self.zip = zip
+class CarDealer(models.Model):
+    address = models.CharField(max_length=255)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    st = models.CharField(max_length=2)
+    zip = models.CharField(max_length=12)
+    lat = models.FloatField()
+    long = models.FloatField()
 
     def __str__(self):
-        return "Dealer name: " + self.full_name
+        return f"{self.city}, {self.state}"
 
 # <HINT> Create a plain Python class `DealerReview` to hold review data
+class Review(models.Model):
+    name = models.CharField(max_length=100)
+    dealership = models.ForeignKey(CarDealer, on_delete=models.CASCADE)
+    review = models.TextField()
+    purchase = models.BooleanField()
+    purchase_date = models.DateField(null=True, blank=True)
+    car_make = models.CharField(max_length=100)
+    car_model = models.CharField(max_length=100)
+    car_year = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.name} - {self.dealership}"

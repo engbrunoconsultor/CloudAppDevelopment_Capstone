@@ -76,30 +76,102 @@ def registration_request(request):
             return render(request, 'djangoapp/user_registration.html', context)
     
 
-# Create a `login_request` view to handle sign in request
-# def login_request(request):
-# ...
-
-# Create a `logout_request` view to handle sign out request
-# def logout_request(request):
-# ...
-
-# Create a `registration_request` view to handle sign up request
-# def registration_request(request):
-# ...
-
 # Update the `get_dealerships` view to render the index page with a list of dealerships
 def get_dealerships(request):
-    context = {}
-    if request.method == "GET":
-        return render(request, 'djangoapp/index.html', context)
+    # context = {}
+    # if request.method == "GET":
+    #     return render(request, 'djangoapp/dealership.html', context)
+    try:
+        # Fetch all dealership records
+        dealerships = CarDealer.objects.all()
+        if not dealerships:
+            return JsonResponse({'error': '404: The database is empty'}, status=404)
+        
+        # Serialize data to JSON format
+        dealerships_data = list(dealerships.values('id', 'city', 'state', 'st', 'address', 'zip', 'lat', 'long'))
+        return JsonResponse(dealerships_data, safe=False)
+    except Exception as e:
+        # Log the exception
+        return JsonResponse({'error': '500: Something went wrong on the server', 'details': str(e)}, status=500)
 
 
 # Create a `get_dealer_details` view to render the reviews of a dealer
 # def get_dealer_details(request, dealer_id):
 # ...
+def get_dealerships_by_state(request):
+    state_abbr = request.GET.get('state', '')
+    if state_abbr:
+        dealers = list(CarDealer.objects.filter(st=state_abbr).values())
+        if not dealers:
+            return JsonResponse({'error': '404: The state does not exist'}, status=404)
+        return JsonResponse(dealers, safe=False)
+    return JsonResponse({'error': '400: State parameter is missing'}, status=400)
 
 # Create a `add_review` view to submit a review
 # def add_review(request, dealer_id):
 # ...
+def get_reviews_by_dealership(request):
+    dealer_id = request.GET.get('dealerId', '')
+    if not dealer_id:
+        return JsonResponse({'error': '400: dealerId parameter is missing'}, status=400)
 
+    try:
+        dealership = CarDealer.objects.get(pk=dealer_id)
+        reviews = Review.objects.filter(dealership=dealership)
+        if not reviews:
+            return JsonResponse({'error': '404: No reviews found for this dealership'}, status=404)
+        
+        reviews_data = list(reviews.values(
+            'id', 'name', 'dealership_id', 'review', 'purchase',
+            'purchase_date', 'car_make', 'car_model', 'car_year'))
+        
+        return JsonResponse(reviews_data, safe=False)
+    except CarDealer.DoesNotExist:
+        return JsonResponse({'error': '404: dealerId does not exist'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': '500: Something went wrong on the server', 'details': str(e)}, status=500)
+
+@csrf_exempt  # Disable CSRF token for demonstration purposes
+@require_http_methods(["POST"])  # Only accept POST requests
+def post_review(request):
+    try:
+        # Parse the JSON body of the request
+        review_data = json.loads(request.body)
+        review_info = review_data.get('review', {})
+
+        # Validate the existence of the dealership
+        dealership_id = review_info.get('dealership')
+        if not CarDealer.objects.filter(id=dealership_id).exists():
+            return JsonResponse({'error': '404: Dealership not found'}, status=404)
+
+        # Create and save the new review object
+        review = Review(
+            name=review_info['name'],
+            dealership_id=dealership_id,
+            review=review_info['review'],
+            purchase=review_info['purchase'],
+            purchase_date=review_info.get('purchase_date'),
+            car_make=review_info.get('car_make'),
+            car_model=review_info.get('car_model'),
+            car_year=review_info.get('car_year')
+        )
+        review.save()
+
+        # Return the created review
+        return JsonResponse({
+            'id': review.id,
+            'name': review.name,
+            'dealership': review.dealership_id,
+            'review': review.review,
+            'purchase': review.purchase,
+            'purchase_date': review.purchase_date,
+            'car_make': review.car_make,
+            'car_model': review.car_model,
+            'car_year': review.car_year
+        })
+    except KeyError as e:
+        # If a required field is missing
+        return JsonResponse({'error': f'400: Missing field {str(e)}'}, status=400)
+    except Exception as e:
+        # Log the error and return a generic server error response
+        return JsonResponse({'error': '500: Something went wrong on the server', 'details': str(e)}, status=500)
